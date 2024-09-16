@@ -1,0 +1,33 @@
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - '3000:3000'
+    env_file: ./frontend/.env.local
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - '8000:8000'
+    env_file: ./backend/.env
+    volumes:
+      - ./backend:/app
+    command: gunicorn app.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
